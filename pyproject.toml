@@ -3,22 +3,26 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "template-python"
+name = "resource-management-service"
 version = "0.0.0"
-description = "Web service template in Python for reuse."
+description = "Resource Management Service for k8s cluster."
 readme = "README.md"
-authors = ["HIRO-MicroDataCenters <all-hiro@hiro-microdatacenters.nl>"]
+authors = ["Peter Forgacs <peter.forgacs@lakeside-labs.com>"]
 license = "MIT"
-repository = "https://github.com/HIRO-MicroDataCenters-BV/python-service-template"
-homepage = "https://github.com/HIRO-MicroDataCenters-BV/python-service-template"
+repository = "https://github.com/ACES-EU/resource-management-service"
+homepage = "https://github.com/ACES-EU/resource-management-service"
 packages = [{include = "*", from="app"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 fastapi = "^0.109"
 uvicorn = "^0.26"
 classy-fastapi = "^0.6.1"
 prometheus-fastapi-instrumentator = "^6.1.0"
+loguru = "^0.7.3"
+kubernetes = "^32.0.0"
+types-requests = "^2.32.0.20241016"
+mesa = "2.2.4"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.6"

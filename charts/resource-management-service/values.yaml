@@ -1,3 +1,5 @@
+namespace: lake
+
 replicaCount: 1
 
 image:
@@ -36,3 +38,6 @@ readinessProbe:
   httpGet:
     path: /
     port: http
+
+webserver:
+  enabled: false

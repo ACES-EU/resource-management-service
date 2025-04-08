@@ -1,7 +1,7 @@
 
 
 
-# template-python
+# Resource Management Service
 Python service template for reuse.
 
   * [Installation](#installation)

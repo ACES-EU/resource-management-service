@@ -1,0 +1,11 @@
+replicas: 1
+
+image:
+  repository: gcr.io/google_containers/pause
+  pullPolicy: IfNotPresent
+  tag: "3.2"
+
+nameOverride: ""
+fullnameOverride: ""
+
+schedulerName: resource-management-service

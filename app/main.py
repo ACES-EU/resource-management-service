@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from . import example, items
+from . import routers  # , items
 
 
 class CustomFastAPI(FastAPI):
@@ -36,5 +36,5 @@ app = CustomFastAPI()
 Instrumentator().instrument(app).expose(app)
 
 
-app.include_router(example.router)
-app.include_router(items.routes.router)
+app.include_router(routers.router)
+# app.include_router(items.routes.router)
