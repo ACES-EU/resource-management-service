@@ -1,9 +1,9 @@
 import random
 
 from loguru import logger
-from schemas import NodeDetail
 
 # from swarm.Master import Master
+from app.schemas import NodeDetail
 from app.swarm.Worker import Worker
 
 
