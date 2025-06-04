@@ -1,5 +1,4 @@
 import json
-from os import environ
 
 import requests
 from kubernetes import client, config, watch
@@ -8,11 +7,13 @@ from loguru import logger
 from app.schemas import NodeDetail
 from app.swarm.SwarmScheduler import SwarmScheduler
 
-# Load kubeconfig
-if "KUBERNETES_SERVICE_HOST" in environ:
+try:
     config.load_incluster_config()
-else:
-    config.load_kube_config()
+except config.config_exception.ConfigException:
+    try:
+        config.load_kube_config()
+    except config.config_exception.ConfigException:
+        logger.error("No Kubernetes config found — running without cluster access")
 
 
 def find_owner_of_pod(pod):
