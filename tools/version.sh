@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 
 ROOT="${GITHUB_WORKSPACE}"
-CHART_NAME="app"
+CHART_NAME="resource-management-service"
 
 VERSION_APP_PATH="${ROOT}/VERSION"
 VERSION_CHART_PATH="${ROOT}/VERSION_CHART"
