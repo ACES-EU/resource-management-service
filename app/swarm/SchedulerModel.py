@@ -3,10 +3,12 @@ import random
 import numpy as np
 from mesa import Model
 from mesa.time import RandomActivation
-from swarm import pod_profiles
-from swarm.Master import Master
-from swarm.Pod import Pod
-from swarm.Worker import Worker
+
+from app.schemas import NodeDetail
+from app.swarm import pod_profiles
+from app.swarm.Master import Master
+from app.swarm.Pod import Pod
+from app.swarm.Worker import Worker
 
 
 class SchedulerModel(Model):
@@ -39,7 +41,15 @@ class SchedulerModel(Model):
 
         # create one worker
         self.agent_id = 0
-        worker = Worker(self.agent_id, self, resource_capacity=worker_capacity)
+        worker = Worker(
+            self,
+            str(self.agent_id),
+            NodeDetail.model_validate_json(
+                '{"usage": {"cpu": 0, "memory": 0}, '
+                '"capacity": {"cpu": 0, "memory": 0}, '
+                '"allocatable": {"cpu": 0, "memory": 0}}'
+            ),
+        )  # , resource_capacity=worker_capacity)
         self.schedule.add(worker)
         self.worker = worker
         self.agent_id += 1

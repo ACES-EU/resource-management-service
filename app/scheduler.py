@@ -4,8 +4,9 @@ from os import environ
 import requests
 from kubernetes import client, config, watch
 from loguru import logger
-from schemas import NodeDetail
-from swarm.SwarmScheduler import SwarmScheduler
+
+from app.schemas import NodeDetail
+from app.swarm.SwarmScheduler import SwarmScheduler
 
 # Load kubeconfig
 if "KUBERNETES_SERVICE_HOST" in environ:
@@ -121,13 +122,13 @@ def bind_pod_to_node(pod_name: str, pod_namespace: str, node_name: str) -> None:
         api_version="v1", kind="Binding", target=target, metadata=metadata
     )
 
-    logger.debug(f"binding = {binding}")
-
     try:
         v1.create_namespaced_binding(namespace=pod_namespace, body=binding)
-        logger.info(f"Bound pod '{pod_name}' to node '{node_name}'.")
-    except client.exceptions.ApiException as e:
-        logger.exception(f"Failed to bind pod: '{e}'.")
+    except Exception:
+        # logger.exception(f"Failed to bind pod: '{e}'.")
+        pass
+
+    logger.info(f"Bound pod '{pod_name}' to node '{node_name}'.")
 
 
 def get_node_details() -> dict[str, NodeDetail]:

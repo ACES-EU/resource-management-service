@@ -1,12 +1,10 @@
 from typing import TYPE_CHECKING
 
-import random
-
-from schemas import NodeDetail
-from swarm import algorithms
+from app.schemas import NodeDetail
+from app.swarm import algorithms
 
 if TYPE_CHECKING:
-    from swarm.SwarmScheduler import SwarmScheduler
+    from app.swarm.SwarmScheduler import SwarmScheduler
 
 
 class Worker:
@@ -54,12 +52,12 @@ class Worker:
             self.current_mem_utilization += pod.demand[1] - pod.demand_slack[1]
 
             # placement in grid
-            xpos = round(pod.demand_steps * pod.demand_slack[0])
-            ypos = round(pod.demand_steps * pod.demand_slack[1])
-            while self.model.grid.is_cell_empty((xpos, ypos)) is False:
-                xpos += random.randint(-5, 5)
-                ypos += random.randint(-5, 5)
-            self.model.grid.place_agent(pod, (xpos, ypos))
+            # xpos = round(pod.demand_steps * pod.demand_slack[0])
+            # ypos = round(pod.demand_steps * pod.demand_slack[1])
+            # while self.model.grid.is_cell_empty((xpos, ypos)) is False:
+            #     xpos += random.randint(-5, 5)
+            #     ypos += random.randint(-5, 5)
+            # self.model.grid.place_agent(pod, (xpos, ypos))
 
             return True
         else:
@@ -104,12 +102,12 @@ class Worker:
             self.current_mem_utilization += pod.demand[1]  # peer_mem
 
             # For visualization: placement in grid
-            xpos = round(peer_pod.demand_steps * peer_pod.demand_slack[0])
-            ypos = round(peer_pod.demand_steps * peer_pod.demand_slack[1])
-            while self.model.grid.is_cell_empty((xpos, ypos)) is False:
-                xpos += random.randint(-5, 5)
-                ypos += random.randint(-5, 5)
-            self.model.grid.place_agent(pod, (xpos, ypos))
+            # xpos = round(peer_pod.demand_steps * peer_pod.demand_slack[0])
+            # ypos = round(peer_pod.demand_steps * peer_pod.demand_slack[1])
+            # while self.model.grid.is_cell_empty((xpos, ypos)) is False:
+            #     xpos += random.randint(-5, 5)
+            #     ypos += random.randint(-5, 5)
+            # self.model.grid.place_agent(pod, (xpos, ypos))
 
             peer_pod.assigned_cpu -= pod.demand[0]  # peer_cpu_slack
             peer_pod.assigned_mem -= pod.demand[1]  # peer_mem_slack
@@ -117,7 +115,7 @@ class Worker:
             peer_pod.demand_slack[1] -= pod.demand[1]
 
             # no more elastic pod can exploit this
-            self.model.master.current_deployed_pods[peer_id] = (0, 0)
+            # self.model.master.current_deployed_pods[peer_id] = (0, 0)
 
             return True
         else:

@@ -4,7 +4,7 @@ from loguru import logger
 from schemas import NodeDetail
 
 # from swarm.Master import Master
-from swarm.Worker import Worker
+from app.swarm.Worker import Worker
 
 
 class SwarmScheduler:
@@ -32,7 +32,6 @@ class SwarmScheduler:
 
     def select_node(self, new_pod):
         # TODO complete the swarm scheduler
-        # self.master.add_to_queue(new_pod)
         mock_choice = random.choice(self.workers)
         logger.debug(f"Mock choice: '{mock_choice.unique_id}'.")
         return mock_choice.unique_id
