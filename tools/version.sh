@@ -3,6 +3,8 @@
 set -o errexit
 set -o nounset
 
+./tools/update_version.sh
+
 ROOT="${GITHUB_WORKSPACE}"
 CHART_NAME="resource-management-service"
 
