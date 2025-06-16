@@ -39,7 +39,10 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["python", "app/scheduler.py"]
+          command: ["python", "-m", "app.scheduler"]
+          env:
+          - name: PYTHONPATH
+            value: /code
         {{- if .Values.webserver.enabled }}
         - name: {{ .Chart.Name }}-webserver
           securityContext:
