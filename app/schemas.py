@@ -48,3 +48,5 @@ class NodeDetail(BaseModel):
     usage: NodeResources
     capacity: NodeResources
     allocatable: NodeResources
+
+    model_config = ConfigDict(extra="allow")

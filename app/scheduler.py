@@ -16,30 +16,28 @@ except config.config_exception.ConfigException:
         logger.error("No Kubernetes config found — running without cluster access")
 
 
-def find_wam():
+def find_pod(label_selector, namespace):
     v1 = client.CoreV1Api()
-    namespace = "default"
-    label_selector = "app.kubernetes.io/name=wam"
     pods = v1.list_namespaced_pod(namespace, label_selector=label_selector)
 
-    wam = None
+    found_pod = None
     if pods.items:
         for pod in pods.items:
-            wam = pod
-            logger.debug(f"Pod Name: {wam.metadata.name}")
-            if wam is not None:
+            found_pod = pod
+            logger.debug(f"Pod Name: {found_pod.metadata.name}")
+            if found_pod is not None:
                 break
     else:
         logger.error(
             f"No pods found with label {label_selector} in namespace {namespace}"
         )
 
-    return wam
+    return found_pod
 
 
 def send_scheduling_request(pod, node_name, id=1):
     """Send the scheduling request to the external service."""
-    wam = find_wam()
+    wam = find_pod("app.kubernetes.io/name=wam", "wam")
     if wam is None:
         return
 
@@ -78,26 +76,25 @@ def send_scheduling_request(pod, node_name, id=1):
 
 
 def get_node_details() -> dict[str, NodeDetail]:
-    # TODO get node details from Orchestrator API
-    metrics_client = client.CustomObjectsApi()
-    v1 = client.CoreV1Api()
+    orchestration_api = find_pod("app=orchestration-api", "hiros")
+    if orchestration_api is None:
+        return {}
 
-    node_metrics = metrics_client.list_cluster_custom_object(
-        group="metrics.k8s.io", version="v1beta1", plural="nodes"
-    )
-    nodes = v1.list_node().items
+    try:
+        response = requests.get(
+            f"http://{orchestration_api.status.pod_ip}:8000/k8s_node"
+        )
+        if response.status_code == 200:
+            return {
+                node["name"]: NodeDetail.model_validate_json(json.dumps(node))
+                for node in response.json()
+            }
+        else:
+            logger.error(f"Status code {response.status_code}: {response.text}")
+    except Exception:
+        logger.exception("Failed to get node details.")
 
-    node_details = {}
-    for node in node_metrics["items"]:
-        node_details[node["metadata"]["name"]] = {"usage": node["usage"]}
-    for node in nodes:
-        node_details[node.metadata.name]["capacity"] = node.status.capacity
-        node_details[node.metadata.name]["allocatable"] = node.status.allocatable
-
-    return {
-        node: NodeDetail.model_validate_json(json.dumps(node_details[node]))
-        for node in node_details
-    }
+    return {}
 
 
 def start_scheduler():
