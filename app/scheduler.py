@@ -71,19 +71,18 @@ def send_scheduling_request(pod, node_name, id=1):
 
     logger.debug(f"Payload:\n{json.dumps(payload, indent=2)}")
 
-    try:
-        response = requests.post(url, json=payload)
-        if response.status_code == 200:
-            logger.info(
-                f"Successfully scheduled Pod {pod.metadata.name} on {node_name}"
-            )
-        else:
-            logger.error(
-                f"Failed to schedule Pod {pod.metadata.name}: "
-                f"{response.status_code} - {response.text}"
-            )
-    except Exception:
-        logger.exception("Error sending scheduling request.")
+    response = requests.post(url, json=payload)
+    if response.status_code == 200:
+        logger.info(f"Successfully scheduled Pod {pod.metadata.name} on {node_name}")
+    else:
+        logger.error(
+            f"Failed to schedule Pod {pod.metadata.name}: "
+            f"{response.status_code} - {response.text}"
+        )
+        raise Exception(
+            f"Failed to schedule Pod {pod.metadata.name}: "
+            f"{response.status_code} - {response.text}"
+        )
 
 
 def get_node_details() -> dict[str, NodeDetail]:
