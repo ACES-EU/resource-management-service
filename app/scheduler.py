@@ -85,6 +85,41 @@ def send_scheduling_request(pod, node_name, id=1):
         )
 
 
+def send_workload_request_decision(pod: Any, node: NodeDetail) -> None:
+    orchestration_api = find_pod("app=aces-orchestration-api", "hiros")
+    if orchestration_api is None:
+        return
+
+    try:
+        response = requests.post(
+            f"http://{orchestration_api.status.pod_ip}:8000"
+            "/workload_request_decision",
+            json={
+                "pod_id": pod.metadata.uid,
+                "pod_name": pod.metadata.name,
+                "namespace": pod.metadata.namespace,
+                "node_id": node.id,
+                "is_elastic": True,
+                # "queue_name": "string",
+                # "demand_cpu": 0,
+                # "demand_memory": 0,
+                # "demand_slack_cpu": 0,
+                # "demand_slack_memory": 0,
+                "is_decision_status": True,
+                # "pod_parent_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                # "pod_parent_kind": "string",
+            },
+        )
+        if response.status_code == 200:
+            logger.info(
+                f"Sent workload request decision about pod {pod.metadata.name}."
+            )
+        else:
+            logger.error(f"Status code {response.status_code}: {response.text}")
+    except Exception:
+        logger.exception("Failed to send workload request decision.")
+
+
 def get_node_details() -> dict[str, NodeDetail]:
     orchestration_api = find_pod("app=aces-orchestration-api", "hiros")
     if orchestration_api is None:
@@ -141,6 +176,7 @@ def perform_scheduling(pod: Any, swarm_model: SwarmScheduler) -> None:
         swarm_model.set_workers(nodes)
         selected_node = swarm_model.select_node(pod)
         send_scheduling_request(pod, selected_node)
+        send_workload_request_decision(pod, nodes[selected_node])
 
         v1.patch_namespaced_pod(
             pod.metadata.name, pod.metadata.namespace, patch_success()

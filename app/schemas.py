@@ -45,6 +45,9 @@ class NodeResources(BaseModel):
 
 
 class NodeDetail(BaseModel):
+    name: str
+    id: str
+
     usage: NodeResources
     capacity: NodeResources
     allocatable: NodeResources
