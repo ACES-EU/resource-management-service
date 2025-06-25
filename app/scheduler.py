@@ -1,9 +1,20 @@
+from typing import Any
+
 import json
+import threading
+import time
 
 import requests
 from kubernetes import client, config, watch
 from loguru import logger
 
+from app.consts import (
+    ANNOT_RETRIES,
+    ANNOT_SCHEDULING_ATTEMPTED,
+    ANNOT_SCHEDULING_SUCCESS,
+    patch_fail,
+    patch_success,
+)
 from app.schemas import NodeDetail
 from app.swarm.SwarmScheduler import SwarmScheduler
 
@@ -76,7 +87,7 @@ def send_scheduling_request(pod, node_name, id=1):
 
 
 def get_node_details() -> dict[str, NodeDetail]:
-    orchestration_api = find_pod("app=orchestration-api", "hiros")
+    orchestration_api = find_pod("app=aces-orchestration-api", "hiros")
     if orchestration_api is None:
         return {}
 
@@ -97,32 +108,100 @@ def get_node_details() -> dict[str, NodeDetail]:
     return {}
 
 
+def perform_scheduling(pod: Any, swarm_model: SwarmScheduler) -> None:
+    """
+    Custom scheduling logic
+    """
+    v1 = client.CoreV1Api()
+    annotations = pod.metadata.annotations or {}
+
+    attempted = annotations.get(ANNOT_SCHEDULING_ATTEMPTED) == "true"
+    success = annotations.get(ANNOT_SCHEDULING_SUCCESS) == "true"
+
+    if attempted and success:
+        logger.debug(
+            f"Pod {pod.metadata.name} already successfully scheduled. Skipping."
+        )
+        return
+
+    retries = int(annotations.get(ANNOT_RETRIES, "0"))
+    # if retries >= 3:
+    #     logger.warning(
+    #         f"Pod {pod.metadata.name} reached max retries ({retries}). Skipping."
+    #     )
+    #     return
+
+    logger.info(f"Scheduling Pod {pod.metadata.name} (retry={retries})")
+
+    try:
+        nodes = get_node_details()
+        if not nodes:
+            logger.info("No available nodes to schedule the Pod.")
+            raise Exception("No available nodes to schedule the Pod.")
+
+        swarm_model.set_workers(nodes)
+        selected_node = swarm_model.select_node(pod)
+        send_scheduling_request(pod, selected_node)
+
+        v1.patch_namespaced_pod(
+            pod.metadata.name, pod.metadata.namespace, patch_success()
+        )
+        logger.info(f"Successfully scheduled pod {pod.metadata.name}")
+    except Exception:
+        logger.exception(
+            f"Scheduling failed for pod {pod.metadata.name}. Marking as failed."
+        )
+        try:
+            v1.patch_namespaced_pod(
+                pod.metadata.name, pod.metadata.namespace, patch_fail(retries + 1)
+            )
+        except Exception:
+            logger.exception(
+                f"Failed to patch pod {pod.metadata.name} with failure status."
+            )
+
+
 def start_scheduler():
     v1 = client.CoreV1Api()
     w = watch.Watch()
 
     swarm_model = SwarmScheduler()
 
-    logger.info("Starting custom scheduler...")
-    for event in w.stream(v1.list_pod_for_all_namespaces):
-        logger.debug(
-            "Found Pod. Checking if it needs to be scheduled by SI-based scheduler..."
-        )
-        pod = event["object"]
-        if (
-            pod.spec.scheduler_name == "resource-management-service"
-            and not pod.spec.node_name
-        ):
-            logger.info(f"Found Pod to schedule: {pod.metadata.name}")
+    def retry_unscheduled():
+        while True:
+            try:
+                pods = v1.list_pod_for_all_namespaces(
+                    field_selector="spec.schedulerName=resource-management-service"
+                ).items
+                for pod in pods:
+                    if not pod.spec.node_name and pod.status.phase == "Pending":
+                        logger.info(
+                            f"[RETRY] Unscheduled pod found: {pod.metadata.name}"
+                        )
+                        perform_scheduling(pod, swarm_model)
+            except Exception:
+                logger.exception("[RETRY] Error during retry logic.")
+            time.sleep(30)
 
-            # Custom scheduling logic
-            nodes = get_node_details()
-            if len(nodes) > 0:
-                swarm_model.set_workers(nodes)
-                selected_node = swarm_model.select_node(pod)
-                send_scheduling_request(pod, selected_node)
-            else:
-                logger.info("No available nodes to schedule the Pod.")
+    threading.Thread(target=retry_unscheduled, daemon=True).start()
+
+    logger.info("Starting custom scheduler...")
+
+    try:
+        for event in w.stream(v1.list_pod_for_all_namespaces):
+            logger.debug(
+                "Found Pod. Checking if it needs to be "
+                "scheduled by SI-based scheduler..."
+            )
+            pod = event["object"]
+            if (
+                pod.spec.scheduler_name == "resource-management-service"
+                and not pod.spec.node_name
+            ):
+                logger.info(f"Found Pod to schedule: {pod.metadata.name}")
+                perform_scheduling(pod, swarm_model)
+    except Exception:
+        logger.exception("Scheduler crashed.")
 
 
 if __name__ == "__main__":

@@ -27,6 +27,8 @@ fi
 
 echo "Version tag '$VERSION_TAG' is valid."
 
+tools/perform_tests.sh
+
 # Create commit
 git add .
 git commit -m "$COMMIT_MSG"
