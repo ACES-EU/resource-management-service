@@ -2,10 +2,10 @@ apiVersion: v1
 entries:
   resource-management-service:
   - apiVersion: v2
-    appVersion: 0.3.5-dev.0.main.6ed59c59
-    created: "2025-06-25T08:29:23.227860099Z"
+    appVersion: 0.3.5
+    created: "2025-06-25T08:29:35.249588705Z"
     description: ACES Resource Management Service
-    digest: 71717b31216418b80c514f4e2ceafb081b358a3c26ec28190b2213024f4f9eca
+    digest: 1914fcff1800abef4dca95f60c27634407176823d6641f260ec248949a0ccbb9
     name: resource-management-service
     type: application
     urls:
@@ -74,12 +74,12 @@ entries:
   test-a:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2025-06-25T08:29:23.228068779Z"
+    created: "2025-06-25T08:29:35.249777538Z"
     description: Helm chart for test deployment A
-    digest: 438f9ebef67c06c199248ba466fc2f1e2969d0cdb449927cbe07c899647ee9e7
+    digest: 0ecb4d480fc43a4e7cc52683ec6a45153ee2ec0818f8c22d5029e5cb0603e098
     name: test-a
     type: application
     urls:
     - https://ACES-EU.github.io/resource-management-service/helm-charts/test-a-0.1.0.tgz
     version: 0.1.0
-generated: "2025-06-25T08:29:23.227382234Z"
+generated: "2025-06-25T08:29:35.249083691Z"
