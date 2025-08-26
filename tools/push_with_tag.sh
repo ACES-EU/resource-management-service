@@ -28,6 +28,7 @@ fi
 echo "Version tag '$VERSION_TAG' is valid."
 
 tools/perform_tests.sh
+tools/update_version.sh
 
 # Create commit
 git add .
