@@ -9,7 +9,7 @@ image:
 
 imagePullSecret:
   name: ghcr-secret
-  dockerconfigjson: "eyJhdXRocyI6eyJnaGNyLmlvIjp7InVzZXJuYW1lIjoiZnBldGtlIiwicGFzc3dvcmQiOiJnaHBfUVhtTUN6SGZCUGVlQklaQllhRVhTNnJDNFBEbHZBMEJ3ekNVIiwiZW1haWwiOiJwZXRlci5mb3JnYWNzQGxha2VzaWRlLWxhYnMuY29tIn19fQ=="
+  dockerconfigjson: "eyJhdXRocyI6eyJnaGNyLmlvIjp7InVzZXJuYW1lIjoiZnBldGtlIiwicGFzc3dvcmQiOiJnaHBfTG5zZzU1bWZqUTRvaHIyNXc1M2Z2c29tSGxWQUU4MG9lNVh0IiwiZW1haWwiOiJwZXRlci5mb3JnYWNzQGxha2VzaWRlLWxhYnMuY29tIn19fQ=="
 nameOverride: ""
 fullnameOverride: ""
 

@@ -56,7 +56,7 @@ def send_scheduling_request(pod, node_name, id=1):
     url = f"http://{wam.status.pod_ip}:3030/rpc"
     logger.debug(f"Found 'wam': {url}")
     payload = {
-        "method": "action.bind",
+        "method": "action.Bind",
         "params": [
             {
                 "pod": {
