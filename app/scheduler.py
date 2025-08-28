@@ -12,6 +12,7 @@ from app.consts import (
     ANNOT_RETRIES,
     ANNOT_SCHEDULING_ATTEMPTED,
     ANNOT_SCHEDULING_SUCCESS,
+    WAM_URL,
     patch_fail,
     patch_success,
 )
@@ -48,13 +49,6 @@ def find_pod(label_selector, namespace):
 
 def send_scheduling_request(pod, node_name, id=1):
     """Send the scheduling request to the external service."""
-    wam = find_pod("app.kubernetes.io/name=wam", "wam")
-    if wam is None:
-        return
-
-    # Add the URL of the wam
-    url = f"http://{wam.status.pod_ip}:3030/rpc"
-    logger.debug(f"Found 'wam': {url}")
     payload = {
         "method": "action.Bind",
         "params": [
@@ -71,7 +65,7 @@ def send_scheduling_request(pod, node_name, id=1):
 
     logger.debug(f"Payload:\n{json.dumps(payload, indent=2)}")
 
-    response = requests.post(url, json=payload)
+    response = requests.post(WAM_URL, json=payload)
     if response.status_code == 200:
         logger.info(f"Successfully scheduled Pod {pod.metadata.name} on {node_name}")
     else:

@@ -43,3 +43,6 @@ readinessProbe:
 
 webserver:
   enabled: false
+
+envVariables:
+  WorkloadActionsManagerURL: http://wam-app.ul.svc.cluster.local:3030/rpc

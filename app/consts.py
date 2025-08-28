@@ -1,6 +1,9 @@
 from typing import Any
 
 from datetime import datetime, timezone
+from os import getenv
+
+WAM_URL = getenv("WAM_URL", "http://wam-app.ul.svc.cluster.local:3030/rpc")
 
 # Annotation keys
 ANNOT_SCHEDULING_ATTEMPTED = "resource-management-service/scheduling-attempted"

@@ -43,6 +43,8 @@ spec:
           env:
           - name: PYTHONPATH
             value: /code
+          - name: WAM_URL
+            value: "{{ .Values.envVariables.WorkloadActionsManagerURL }}"
         {{- if .Values.webserver.enabled }}
         - name: {{ .Chart.Name }}-webserver
           securityContext:
