@@ -278,7 +278,8 @@ def start_scheduler():
         for event in w.stream(v1.list_pod_for_all_namespaces):
             pod = event["object"]
             if (
-                pod.spec.scheduler_name == "resource-management-service"
+                event["type"] == "ADDED"
+                and pod.spec.scheduler_name == "resource-management-service"
                 and not pod.spec.node_name
             ):
                 logger.info(f"Found Pod to schedule: {pod.metadata.name}")

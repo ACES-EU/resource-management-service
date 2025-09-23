@@ -2,5 +2,5 @@ apiVersion: v2
 name: resource-management-service
 description: ACES Resource Management Service
 type: application
-version: "0.3.13"
+version: "0.3.14"
 appVersion: ""
