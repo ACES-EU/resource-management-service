@@ -113,7 +113,7 @@ def send_workload_request_decision(
             f"{ORCHESTRATION_API_URL}/workload_request_decision",
             json={
                 "is_elastic": True,
-                # "queue_name": "string",
+                "queue_name": "",  # TODO find out what this could be
                 "demand_cpu": 0,
                 "demand_memory": 0,
                 "demand_slack_cpu": 0,
@@ -175,9 +175,9 @@ def perform_scheduling(
 
     logger.debug(
         f"Annotations for pod {pod.metadata.name}:\n"
-        f"{ANNOT_DECISION_START_TIME}: {start_time_annot}\n"
-        f"{ANNOT_SCHEDULING_ATTEMPTED}: {attempted}\n"
-        f"{ANNOT_SCHEDULING_SUCCESS}: {success}"
+        f"\t{ANNOT_DECISION_START_TIME}: {start_time_annot}\n"
+        f"\t{ANNOT_SCHEDULING_ATTEMPTED}: {attempted}\n"
+        f"\t{ANNOT_SCHEDULING_SUCCESS}: {success}"
     )
 
     if start_time_annot:
@@ -229,12 +229,11 @@ def perform_scheduling(
         send_workload_request_decision(
             pod, nodes[selected_node], decision_start_time, get_timestamp()
         )
-        send_scheduling_request(pod, selected_node)
-
         v1.patch_namespaced_pod(
             pod.metadata.name, pod.metadata.namespace, patch_success()
         )
-        logger.info(f"Successfully scheduled pod {pod.metadata.name}")
+
+        send_scheduling_request(pod, selected_node)
     except Exception:
         logger.exception(
             f"Scheduling failed for pod {pod.metadata.name}. Marking as failed."
