@@ -46,3 +46,4 @@ webserver:
 
 envVariables:
   WorkloadActionsManagerURL: http://wam-app.ul.svc.cluster.local:3030/rpc
+  OrchestrationAPI: http://aces-orchestration-api.hiros.svc.cluster.local

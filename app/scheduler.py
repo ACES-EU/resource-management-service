@@ -9,10 +9,14 @@ from kubernetes import client, config, watch
 from loguru import logger
 
 from app.consts import (
+    ANNOT_DECISION_START_TIME,
     ANNOT_RETRIES,
     ANNOT_SCHEDULING_ATTEMPTED,
     ANNOT_SCHEDULING_SUCCESS,
+    ORCHESTRATION_API_URL,
     WAM_URL,
+    get_timestamp,
+    patch_decision_start,
     patch_fail,
     patch_success,
 )
@@ -26,25 +30,6 @@ except config.config_exception.ConfigException:
         config.load_kube_config()
     except config.config_exception.ConfigException:
         logger.error("No Kubernetes config found — running without cluster access")
-
-
-def find_pod(label_selector, namespace):
-    v1 = client.CoreV1Api()
-    pods = v1.list_namespaced_pod(namespace, label_selector=label_selector)
-
-    found_pod = None
-    if pods.items:
-        for pod in pods.items:
-            found_pod = pod
-            logger.debug(f"Pod Name: {found_pod.metadata.name}")
-            if found_pod is not None:
-                break
-    else:
-        logger.error(
-            f"No pods found with label {label_selector} in namespace {namespace}"
-        )
-
-    return found_pod
 
 
 def send_scheduling_request(pod, node_name, id=1):
@@ -79,29 +64,74 @@ def send_scheduling_request(pod, node_name, id=1):
         )
 
 
-def send_workload_request_decision(pod: Any, node: NodeDetail) -> None:
-    orchestration_api = find_pod("app=aces-orchestration-api", "hiros")
-    if orchestration_api is None:
-        return
+def get_pod_parent_details(namespace, pod_name=None, pod_id=None):
+    params = {"namespace": namespace}
+    if pod_name:
+        params["name"] = pod_name
+    elif pod_id:
+        params["pod_id"] = pod_id
+    else:
+        logger.error("Either pod_name or pod_id must be provided.")
+        return {}
 
     try:
+        response = requests.get(
+            f"{ORCHESTRATION_API_URL}/k8s_pod_parent", params=params
+        )
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"Status code {response.status_code}: {response.text}")
+    except Exception:
+        logger.exception("Failed to get node details.")
+
+    return {}
+
+
+def send_workload_request_decision(
+    pod: Any, node: NodeDetail, decision_start_time: str, decision_end_time: str
+) -> None:
+    pod_parent_details = {
+        "pod_parent_id": "",
+        "pod_parent_name": "",
+        "pod_parent_kind": "",
+    }
+    try:
+        if pod.metadata.owner_references:
+            for owner in pod.metadata.owner_references:
+                pod_parent_details["pod_parent_id"] = owner.uid
+                pod_parent_details["pod_parent_name"] = owner.name
+                pod_parent_details["pod_parent_kind"] = owner.kind
+        else:
+            pod_parent = get_pod_parent_details(
+                pod.metadata.namespace, pod.metadata.name
+            )
+            pod_parent_details["pod_parent_name"] = pod_parent["name"]
+            pod_parent_details["pod_parent_kind"] = pod_parent["kind"]
+
         response = requests.post(
-            f"http://{orchestration_api.status.pod_ip}:8000"
-            "/workload_request_decision",
+            f"{ORCHESTRATION_API_URL}/workload_request_decision",
             json={
+                "is_elastic": True,
+                # "queue_name": "string",
+                "demand_cpu": 0,
+                "demand_memory": 0,
+                "demand_slack_cpu": 0,
+                "demand_slack_memory": 0,
                 "pod_id": pod.metadata.uid,
                 "pod_name": pod.metadata.name,
                 "namespace": pod.metadata.namespace,
                 "node_id": node.id,
-                "is_elastic": True,
-                # "queue_name": "string",
-                # "demand_cpu": 0,
-                # "demand_memory": 0,
-                # "demand_slack_cpu": 0,
-                # "demand_slack_memory": 0,
-                "is_decision_status": True,
-                # "pod_parent_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                # "pod_parent_kind": "string",
+                "node_name": node.name,
+                "action_type": "bind",
+                "decision_status": "pending",
+                "pod_parent_id": pod_parent_details["pod_parent_id"],
+                "pod_parent_name": pod_parent_details["pod_parent_name"],
+                "pod_parent_kind": pod_parent_details["pod_parent_kind"],
+                "decision_start_time": decision_start_time,
+                "decision_end_time": decision_end_time,
+                # "created_at": "2025-09-22T17:44:50.831257Z",
+                # "deleted_at": "2025-09-23T08:38:53.751Z"
             },
         )
         if response.status_code == 200:
@@ -115,14 +145,8 @@ def send_workload_request_decision(pod: Any, node: NodeDetail) -> None:
 
 
 def get_node_details() -> dict[str, NodeDetail]:
-    orchestration_api = find_pod("app=aces-orchestration-api", "hiros")
-    if orchestration_api is None:
-        return {}
-
     try:
-        response = requests.get(
-            f"http://{orchestration_api.status.pod_ip}:8000/k8s_node"
-        )
+        response = requests.get(f"{ORCHESTRATION_API_URL}/k8s_node")
         if response.status_code == 200:
             return {
                 node["name"]: NodeDetail.model_validate_json(json.dumps(node))
@@ -136,12 +160,32 @@ def get_node_details() -> dict[str, NodeDetail]:
     return {}
 
 
-def perform_scheduling(pod: Any, swarm_model: SwarmScheduler) -> None:
+def perform_scheduling(
+    pod: Any, swarm_model: SwarmScheduler, decision_start_time: str | None = None
+) -> None:
     """
     Custom scheduling logic
     """
     v1 = client.CoreV1Api()
     annotations = pod.metadata.annotations or {}
+
+    start_time_annot = annotations.get(ANNOT_DECISION_START_TIME)
+    if start_time_annot:
+        decision_start_time = str(start_time_annot)
+    else:
+        if decision_start_time is None:
+            decision_start_time = get_timestamp()
+        try:
+            v1.patch_namespaced_pod(
+                pod.metadata.name,
+                pod.metadata.namespace,
+                patch_decision_start(decision_start_time),
+            )
+        except Exception:
+            logger.exception(
+                f"Failed to patch pod {pod.metadata.name} with decision start time."
+            )
+    logger.debug(f"Scheduling pod {pod.metadata.name} started at {decision_start_time}")
 
     attempted = annotations.get(ANNOT_SCHEDULING_ATTEMPTED) == "true"
     success = annotations.get(ANNOT_SCHEDULING_SUCCESS) == "true"
@@ -169,8 +213,10 @@ def perform_scheduling(pod: Any, swarm_model: SwarmScheduler) -> None:
 
         swarm_model.set_workers(nodes)
         selected_node = swarm_model.select_node(pod)
+        send_workload_request_decision(
+            pod, nodes[selected_node], decision_start_time, get_timestamp()
+        )
         send_scheduling_request(pod, selected_node)
-        send_workload_request_decision(pod, nodes[selected_node])
 
         v1.patch_namespaced_pod(
             pod.metadata.name, pod.metadata.namespace, patch_success()
@@ -218,17 +264,13 @@ def start_scheduler():
 
     try:
         for event in w.stream(v1.list_pod_for_all_namespaces):
-            logger.debug(
-                "Found Pod. Checking if it needs to be "
-                "scheduled by SI-based scheduler..."
-            )
             pod = event["object"]
             if (
                 pod.spec.scheduler_name == "resource-management-service"
                 and not pod.spec.node_name
             ):
                 logger.info(f"Found Pod to schedule: {pod.metadata.name}")
-                perform_scheduling(pod, swarm_model)
+                perform_scheduling(pod, swarm_model, get_timestamp())
     except Exception:
         logger.exception("Scheduler crashed.")
 

@@ -45,6 +45,8 @@ spec:
             value: /code
           - name: WAM_URL
             value: "{{ .Values.envVariables.WorkloadActionsManagerURL }}"
+          - name: ORCHESTRATION_API_URL
+            value: "{{ .Values.envVariables.OrchestrationAPI }}"
         {{- if .Values.webserver.enabled }}
         - name: {{ .Chart.Name }}-webserver
           securityContext:
