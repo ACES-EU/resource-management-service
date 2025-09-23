@@ -127,7 +127,7 @@ def send_workload_request_decision(
                 "decision_status": "pending",
                 "pod_parent_id": pod_parent_details["pod_parent_id"],
                 "pod_parent_name": pod_parent_details["pod_parent_name"],
-                "pod_parent_kind": pod_parent_details["pod_parent_kind"],
+                "pod_parent_kind": pod_parent_details["pod_parent_kind"].lower(),
                 "decision_start_time": decision_start_time,
                 "decision_end_time": decision_end_time,
                 # "created_at": "2025-09-22T17:44:50.831257Z",
@@ -170,10 +170,26 @@ def perform_scheduling(
     annotations = pod.metadata.annotations or {}
 
     start_time_annot = annotations.get(ANNOT_DECISION_START_TIME)
+    attempted = annotations.get(ANNOT_SCHEDULING_ATTEMPTED) == "true"
+    success = annotations.get(ANNOT_SCHEDULING_SUCCESS) == "true"
+
+    logger.debug(
+        f"Annotations for pod {pod.metadata.name}:\n"
+        f"{ANNOT_DECISION_START_TIME}: {start_time_annot}\n"
+        f"{ANNOT_SCHEDULING_ATTEMPTED}: {attempted}\n"
+        f"{ANNOT_SCHEDULING_SUCCESS}: {success}"
+    )
+
     if start_time_annot:
         decision_start_time = str(start_time_annot)
     else:
         if decision_start_time is None:
+            if attempted:
+                logger.error(
+                    f"There was a scheduling attempt for pod {pod.metadata.name}"
+                    ", but 'decision_start_time' doesn't exist."
+                )
+                return
             decision_start_time = get_timestamp()
         try:
             v1.patch_namespaced_pod(
@@ -186,9 +202,6 @@ def perform_scheduling(
                 f"Failed to patch pod {pod.metadata.name} with decision start time."
             )
     logger.debug(f"Scheduling pod {pod.metadata.name} started at {decision_start_time}")
-
-    attempted = annotations.get(ANNOT_SCHEDULING_ATTEMPTED) == "true"
-    success = annotations.get(ANNOT_SCHEDULING_SUCCESS) == "true"
 
     if attempted and success:
         logger.debug(
