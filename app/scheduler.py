@@ -22,6 +22,7 @@ from app.consts import (
 )
 from app.schemas import NodeDetail
 from app.swarm.SwarmScheduler import SwarmScheduler
+from app.utils import classify_pod, compute_node_slack, get_pod_requested_resources
 
 try:
     config.load_incluster_config()
@@ -109,13 +110,15 @@ def send_workload_request_decision(
             pod_parent_details["pod_parent_name"] = pod_parent["name"]
             pod_parent_details["pod_parent_kind"] = pod_parent["kind"]
 
+        demands = get_pod_requested_resources(pod)
+
         response = requests.post(
             f"{ORCHESTRATION_API_URL}/workload_request_decision",
             json={
-                "is_elastic": True,
+                "is_elastic": classify_pod(pod) == "elastic",
                 "queue_name": "",  # TODO find out what this could be
-                "demand_cpu": 0,
-                "demand_memory": 0,
+                "demand_cpu": demands["cpu"],
+                "demand_memory": demands["memory"],
                 "demand_slack_cpu": 0,
                 "demand_slack_memory": 0,
                 "pod_id": pod.metadata.uid,
@@ -144,14 +147,23 @@ def send_workload_request_decision(
         logger.exception("Failed to send workload request decision.")
 
 
-def get_node_details() -> dict[str, NodeDetail]:
+def get_node_details(get_slack: bool) -> dict[str, NodeDetail]:
     try:
         response = requests.get(f"{ORCHESTRATION_API_URL}/k8s_node")
         if response.status_code == 200:
-            return {
-                node["name"]: NodeDetail.model_validate_json(json.dumps(node))
-                for node in response.json()
-            }
+            node_details = {}
+            slack_per_node = compute_node_slack() if get_slack else None
+
+            for node in response.json():
+                node_detail = node.copy()
+                if slack_per_node:
+                    node_detail["slack"] = slack_per_node.get(node["name"])
+
+                node_details[node["name"]] = NodeDetail.model_validate_json(
+                    json.dumps(node_detail)
+                )
+
+            return node_details
         else:
             logger.error(f"Status code {response.status_code}: {response.text}")
     except Exception:
@@ -219,13 +231,17 @@ def perform_scheduling(
     logger.info(f"Scheduling Pod {pod.metadata.name} (retry={retries})")
 
     try:
-        nodes = get_node_details()
+        nodes = get_node_details(classify_pod(pod) == "elastic")
         if not nodes:
             logger.info("No available nodes to schedule the Pod.")
             raise Exception("No available nodes to schedule the Pod.")
 
         swarm_model.set_workers(nodes)
+        # TODO get thresholds from parameter tuner ML model
         selected_node = swarm_model.select_node(pod)
+        if selected_node is None:
+            raise Exception(f"Couldn't select a node for pod '{pod.metadata.name}'")
+
         send_workload_request_decision(
             pod, nodes[selected_node], decision_start_time, get_timestamp()
         )
