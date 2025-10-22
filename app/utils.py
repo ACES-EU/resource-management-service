@@ -2,7 +2,7 @@ from typing import Any
 
 import requests
 from kubernetes import client, config
-from kubernetes.utils.quantity import parse_quantity
+from kubernetes.utils.quantity import parse_quantity as pq
 from loguru import logger
 
 from app.consts import ORCHESTRATION_API_URL
@@ -16,6 +16,10 @@ except config.config_exception.ConfigException:
         logger.error("No Kubernetes config found — running without cluster access")
 v1 = client.CoreV1Api()
 custom = client.CustomObjectsApi()
+
+
+def parse_quantity(quantity):
+    return float(pq(quantity))
 
 
 def classify_pod(pod):
