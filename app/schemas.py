@@ -35,6 +35,6 @@ class NodeDetail(BaseModel):
     capacity: NodeResources
     allocatable: NodeResources
 
-    slack: Optional[dict[tuple[str], NodeResources]] = None
+    slack: Optional[dict[str, NodeResources]] = None
 
     model_config = ConfigDict(extra="allow")
