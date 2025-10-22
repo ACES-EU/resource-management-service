@@ -1,8 +1,11 @@
 from typing import Any
 
+import requests
 from kubernetes import client, config
 from kubernetes.utils.quantity import parse_quantity
 from loguru import logger
+
+from app.consts import ORCHESTRATION_API_URL
 
 try:
     config.load_incluster_config()
@@ -23,14 +26,33 @@ def classify_pod(pod):
     return "elastic"
 
 
+def get_pods_in_k8s():
+    try:
+        response = requests.get(f"{ORCHESTRATION_API_URL}/k8s_pod")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"Status code {response.status_code}: {response.text}")
+    except Exception:
+        logger.exception("Failed to get node details.")
+
+
+def classify_pod_dict(pod):
+    containers = pod.get("containers", [])
+    for c in containers:
+        if c.get("cpu_limit") or c.get("memory_limit"):
+            return "rigid"
+    return "elastic"
+
+
 def get_pods_by_type():
-    pods = v1.list_pod_for_all_namespaces().items
+    pods = get_pods_in_k8s()
     rigid: list[Any] = []
     elastic: list[Any] = []
     for p in pods:
         # skip finished pods
-        if p.status.phase not in ("Succeeded", "Failed"):
-            typ = classify_pod(p)
+        if p.get("status") not in ("Succeeded", "Failed"):
+            typ = classify_pod_dict(p)
             (rigid if typ == "rigid" else elastic).append(p)
     return rigid, elastic
 
@@ -55,17 +77,17 @@ def compute_node_slack():
     slack_per_node: dict[str, dict[Any, Any]] = {}
 
     for pod in rigid:
-        node = pod.spec.node_name
-        key = (pod.metadata.namespace, pod.metadata.name)
+        node = pod.get("node_name")
+        key = (pod.get("namespace"), pod.get("name"))
         used = usage.get(key, {"cpu": 0, "memory": 0})
 
         req_cpu = sum(
-            parse_quantity(c.resources.requests.get("cpu", "0"))
-            for c in pod.spec.containers
+            parse_quantity(c.get("cpu_request") if c.get("cpu_request") else "0")
+            for c in pod.get("containers", [])
         )
         req_mem = sum(
-            parse_quantity(c.resources.requests.get("memory", "0"))
-            for c in pod.spec.containers
+            parse_quantity(c.get("memory_request") if c.get("memory_request") else "0")
+            for c in pod.get("containers", [])
         )
 
         slack_cpu = max(req_cpu - used["cpu"], 0)
