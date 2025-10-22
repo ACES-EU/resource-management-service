@@ -78,7 +78,7 @@ def compute_node_slack():
 
     for pod in rigid:
         node = pod.get("node_name")
-        key = (pod.get("namespace"), pod.get("name"))
+        key = f"{pod.get('namespace')};{pod.get('name')}"
         used = usage.get(key, {"cpu": 0, "memory": 0})
 
         req_cpu = sum(
