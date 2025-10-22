@@ -4,7 +4,7 @@ metadata:
   name: {{ include "app.fullname" . }}-metrics-reader
 rules:
 - apiGroups: ["metrics.k8s.io"]
-  resources: ["nodes"]
+  resources: ["pods"]
   verbs: ["get", "list", "watch"]
 - apiGroups: [""]
   resources: ["pods"]
