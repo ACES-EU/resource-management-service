@@ -1,5 +1,7 @@
 from typing import Any
 
+from datetime import datetime
+
 import requests
 from kubernetes import client, config
 from kubernetes.utils.quantity import parse_quantity as pq
@@ -20,6 +22,12 @@ custom = client.CustomObjectsApi()
 
 def parse_quantity(quantity):
     return float(pq(quantity))
+
+
+def diff_timestamps(t1: str, t2: str) -> float:
+    dt1 = datetime.fromisoformat(t1.replace("Z", "+00:00"))
+    dt2 = datetime.fromisoformat(t2.replace("Z", "+00:00"))
+    return (dt2 - dt1).total_seconds()
 
 
 def classify_pod(pod):

@@ -22,7 +22,12 @@ from app.consts import (
 )
 from app.schemas import NodeDetail
 from app.swarm.SwarmScheduler import SwarmScheduler
-from app.utils import classify_pod, compute_node_slack, get_pod_requested_resources
+from app.utils import (
+    classify_pod,
+    compute_node_slack,
+    diff_timestamps,
+    get_pod_requested_resources,
+)
 
 try:
     config.load_incluster_config()
@@ -92,6 +97,10 @@ def get_pod_parent_details(namespace, pod_name=None, pod_id=None):
 def send_workload_request_decision(
     pod: Any, node: NodeDetail, decision_start_time: str, decision_end_time: str
 ) -> None:
+    logger.info(
+        "The decision was made in "
+        f"{diff_timestamps(decision_start_time, decision_end_time)} s."
+    )
     pod_parent_details = {
         "pod_parent_id": "",
         "pod_parent_name": "",
