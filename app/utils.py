@@ -49,6 +49,20 @@ def get_pods_in_k8s():
         logger.exception("Failed to get node details.")
 
 
+def get_parameters(limit=1):
+    logger.debug("Reading latest parameter(s).")
+    try:
+        response = requests.get(
+            f"{ORCHESTRATION_API_URL}/tuning_parameters/latest/{limit}"
+        )
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"Status code {response.status_code}: {response.text}")
+    except Exception:
+        logger.exception("Failed to get parameters.")
+
+
 def classify_pod_dict(pod):
     containers = pod.get("containers", [])
     for c in containers:

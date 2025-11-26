@@ -6,12 +6,13 @@ from loguru import logger
 
 from app.schemas import NodeDetail
 from app.swarm.Worker import Worker
-from app.utils import classify_pod, get_pod_requested_resources
+from app.utils import classify_pod, get_parameters, get_pod_requested_resources
 
 
 class SwarmScheduler:
     workers: list[Worker]
     lookup_table: dict[tuple[str], list[dict[str, Any]]]
+    params: dict[str, float]
 
     def __init__(
         self,
@@ -33,6 +34,11 @@ class SwarmScheduler:
             Worker(self, unique_id, workers[unique_id]) for unique_id in workers
         ]
 
+    def set_parameters(self):
+        params = get_parameters()
+        if params and len(params) > 0:
+            self.params = params[0]
+
     def generate_key(self, slack_values, thresholds, slack_estimation_error):
         key = []
         for value, threshold in zip(slack_values, thresholds):
@@ -44,9 +50,7 @@ class SwarmScheduler:
         # Robustness: randomly assign the bucket for a specific
         # percentage of rigid pods' slacks
         if random.random() < slack_estimation_error:
-            key = random.choices([["L", "L"], ["L", "H"], ["H", "L"], ["H", "H"]], k=1)[
-                0
-            ]
+            key = random.choice([["L", "L"], ["L", "H"], ["H", "L"], ["H", "H"]])
 
         return tuple(key)
 
@@ -91,6 +95,12 @@ class SwarmScheduler:
                 and pod_demand["memory"] <= choice["slack"][1]
             ):
                 return str(choice["node"])
+            elif random.random() < self.params["gamma"]:
+                logger.info(
+                    f"Couldn't schedule pod '{pod.metadata.name}', "
+                    "trying to schedule as rigid."
+                )
+                return self.schedule_rigid(pod)
             else:
                 error_msg = (
                     f"The resource requests of pod '{pod.metadata.name}' are "
@@ -118,9 +128,7 @@ class SwarmScheduler:
             logger.error(error_msg)
             raise Exception(error_msg)
 
-    def select_node(
-        self, new_pod, thresholds=(500, 512000), slack_estimation_error=0.2
-    ):
+    def select_node(self, new_pod, slack_estimation_error=0.2):
         if self.method == "RND":
             mock_choice = random.choice(self.workers)
             logger.debug(f"Mock choice: '{mock_choice.unique_id}'.")
@@ -129,8 +137,11 @@ class SwarmScheduler:
         elif self.method == "SWARM":
             if classify_pod(new_pod) == "elastic":
                 logger.info(f"Scheduling pod {new_pod.metadata.name} as elastic.")
+                self.set_parameters()
                 return self.schedule_elastic(
-                    new_pod, thresholds, slack_estimation_error
+                    new_pod,
+                    (self.params["alpha"], self.params["beta"]),
+                    slack_estimation_error,
                 )
             else:
                 logger.info(f"Scheduling pod {new_pod.metadata.name} as rigid.")
