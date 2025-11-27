@@ -38,6 +38,7 @@ class SwarmScheduler:
         params = get_parameters()
         if params and len(params) > 0:
             self.params = params[0]
+        logger.debug(f"Latest parameters:\n{self.params}")
 
     def generate_key(self, slack_values, thresholds, slack_estimation_error):
         key = []
