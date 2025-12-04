@@ -44,8 +44,8 @@ for i in $(seq 1 $COUNT); do
     # limits or not?
     roll=$(random_range 1 10)
     if (( roll <= LIMIT_PROB )); then
-	CPU_LIMIT="$(random_range 200 2000)m"
-	MEM_LIMIT="$(random_range 128 4096)Mi"
+	CPU_LIMIT="`random_range ${CPU_REQ%m} 2000`m"
+	MEM_LIMIT="`random_range ${MEM_REQ%Mi} 4096`Mi"
         LIMITS_BLOCK=`echo -ne "        limits:\n          cpu: \"${CPU_LIMIT}\"\n          memory: \"${MEM_LIMIT}\"\n"`
     else
         LIMITS_BLOCK=""
