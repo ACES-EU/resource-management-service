@@ -1,18 +1,18 @@
 #!/bin/bash
 
-COUNT=15
+COUNT=10
 SLEEP_TIME_SECONDS=5
 SCHEDULER="resource-management-service"
 IMAGE="nginx"
 
-declare -A CPU_REQS=(
+CPU_REQS=(
   ["small"]="50m"
   ["medium"]="200m"
   ["large"]="500m"
   ["xl"]="1000m"
 )
 
-declare -A MEM_REQS=(
+MEM_REQS=(
   ["small"]="64Mi"
   ["medium"]="256Mi"
   ["large"]="512Mi"
@@ -35,7 +35,7 @@ TEMPLATE_FILE="tools/pod-template.yaml"
 
 for i in $(seq 1 $COUNT); do
     # pick bucket
-    idx=$(shuf -i 0-$((${#BUCKETS[@]} - 1)) -n 1)
+    idx=$(random_range 0 $((${#BUCKETS[@]} - 1)))
     BUCKET="${BUCKETS[$idx]}"
 
     CPU_REQ="${CPU_REQS[$BUCKET]}"
@@ -44,9 +44,9 @@ for i in $(seq 1 $COUNT); do
     # limits or not?
     roll=$(random_range 1 10)
     if (( roll <= LIMIT_PROB )); then
-	CPU_LIMIT="`random_range ${CPU_REQ%m} 2000`m"
-	MEM_LIMIT="`random_range ${MEM_REQ%Mi} 4096`Mi"
-        LIMITS_BLOCK=`echo -ne "        limits:\n          cpu: \"${CPU_LIMIT}\"\n          memory: \"${MEM_LIMIT}\"\n"`
+        CPU_LIMIT="`random_range ${CPU_REQ%m} 2000`m"
+        MEM_LIMIT="`random_range ${MEM_REQ%Mi} 4096`Mi"
+        LIMITS_BLOCK=`echo -ne "            limits:\n              cpu: \"${CPU_LIMIT}\"\n              memory: \"${MEM_LIMIT}\"\n"`
     else
         LIMITS_BLOCK=""
     fi
@@ -54,9 +54,14 @@ for i in $(seq 1 $COUNT); do
     NAME="test-pod-$i"
 
     # Export all environment variables for envsubst
+    
+    echo "$LIMITS_BLOCK"
+
+    
     export NAME BUCKET SCHEDULER IMAGE CPU_REQ MEM_REQ LIMITS_BLOCK
 
-    envsubst < "$TEMPLATE_FILE" | kubectl apply -n lake -f -
+    envsubst < "$TEMPLATE_FILE" | kubectl apply --kubeconfig=/Users/sskrishnavutukuri/.kube/aces.yaml -f -
+    # envsubst < "$TEMPLATE_FILE" 
 
     echo "Created $NAME in bucket $BUCKET (req=${CPU_REQ}/${MEM_REQ}, limits=${CPU_LIMIT:-none}/${MEM_LIMIT:-none})"
 
