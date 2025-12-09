@@ -133,7 +133,7 @@ def get_pod_requested_resources(pod):
     total_mem = 0
 
     for container in pod.spec.containers:
-        requests = container.resources.requests or {}
+        requests = container.resources.limits or container.resources.requests or {}
         cpu_req = requests.get("cpu", "0")
         mem_req = requests.get("memory", "0")
 
