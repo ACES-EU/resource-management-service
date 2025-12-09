@@ -1,6 +1,6 @@
 #!/bin/bash
 
-COUNT=5
+COUNT=10
 SLEEP_TIME_SECONDS=5
 CHART="./charts/si-test"
 NAMESPACE="lake"
@@ -9,19 +9,11 @@ SCHEDULER="resource-management-service"
 # Bucket distribution (change weights by repeating entries)
 BUCKETS=("small" "small" "medium" "medium" "large" "large" "xl")
 
-CPU_REQS=(
-  ["small"]="50m"
-  ["medium"]="200m"
-  ["large"]="500m"
-  ["xl"]="1000m"
-)
-
-MEM_REQS=(
-  ["small"]="64Mi"
-  ["medium"]="256Mi"
-  ["large"]="512Mi"
-  ["xl"]="1024Mi"
-)
+# Requests per bucket
+CPU_REQ_SMALL="50m";   MEM_REQ_SMALL="64Mi"
+CPU_REQ_MEDIUM="200m"; MEM_REQ_MEDIUM="256Mi"
+CPU_REQ_LARGE="500m";  MEM_REQ_LARGE="512Mi"
+CPU_REQ_XL="1000m";    MEM_REQ_XL="1024Mi"
 
 # Chance (0–10) that ANY bucket gets limits
 LIMIT_PROB=3   # 30%
@@ -37,8 +29,24 @@ for i in $(seq 1 $COUNT); do
     idx=$(random_range 0 $((${#BUCKETS[@]} - 1)))
     BUCKET="${BUCKETS[$idx]}"
 
-    CPU_REQ="${CPU_REQS[$BUCKET]}"
-    MEM_REQ="${MEM_REQS[$BUCKET]}"
+    case $BUCKET in
+        small)
+            CPU_REQ=$CPU_REQ_SMALL
+            MEM_REQ=$MEM_REQ_SMALL
+            ;;
+        medium)
+            CPU_REQ=$CPU_REQ_MEDIUM
+            MEM_REQ=$MEM_REQ_MEDIUM
+            ;;
+        large)
+            CPU_REQ=$CPU_REQ_LARGE
+            MEM_REQ=$MEM_REQ_LARGE
+            ;;
+        xl)
+            CPU_REQ=$CPU_REQ_XL
+            MEM_REQ=$MEM_REQ_XL
+            ;;
+    esac
 
     # limits or not?
     roll=$(random_range 1 10)
@@ -68,6 +76,7 @@ for i in $(seq 1 $COUNT); do
 
     echo "[INFO] Created $RELEASE in bucket $BUCKET (req=${CPU_REQ}/${MEM_REQ}, limits=${CPU_LIMIT:-none}/${MEM_LIMIT:-none})"
     sleep $SLEEP_TIME_SECONDS
+    echo
 done
 
 
