@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "si-test.fullname" . }}
+  namespace: lake
+  labels:
+    app.kubernetes.io/name: {{ include "si-test.name" . }}
+    workload: {{ .Values.workload | quote }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "si-test.name" . }}
+      workload: {{ .Values.workload | quote }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "si-test.name" . }}
+        workload: {{ .Values.workload | quote }}
+    spec:
+      schedulerName: {{ .Values.schedulerName }}
+      containers:
+        - name: workload
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
+
+            {{- if .Values.resources.limits }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
+            {{- end }}

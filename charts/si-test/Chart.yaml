@@ -1,0 +1,6 @@
+apiVersion: v2
+name: si-test
+description: Test workloads for SI-based scheduler
+type: application
+version: 0.1.0
+appVersion: "1.0"

@@ -219,7 +219,7 @@ def perform_scheduling(
                 patch_decision_start(decision_start_time),
             )
         except Exception:
-            logger.exception(
+            logger.warning(
                 f"Failed to patch pod {pod.metadata.name} with decision start time."
             )
     logger.debug(f"Scheduling pod {pod.metadata.name} started at {decision_start_time}")
@@ -246,7 +246,6 @@ def perform_scheduling(
             raise Exception("No available nodes to schedule the Pod.")
 
         swarm_model.set_workers(nodes)
-        # TODO get thresholds from parameter tuner ML model
         selected_node = swarm_model.select_node(pod)
         if selected_node is None:
             raise Exception(f"Couldn't select a node for pod '{pod.metadata.name}'")
@@ -259,9 +258,9 @@ def perform_scheduling(
         )
 
         send_scheduling_request(pod, selected_node)
-    except Exception:
-        logger.exception(
-            f"Scheduling failed for pod {pod.metadata.name}. Marking as failed."
+    except Exception as e:
+        logger.warning(
+            f"Scheduling failed for pod {pod.metadata.name}. {e} - Marking as failed."
         )
         try:
             v1.patch_namespaced_pod(

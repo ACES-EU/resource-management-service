@@ -1,0 +1,21 @@
+replicas: 1
+
+schedulerName: "resource-management-service"
+
+image:
+  repository: "nginx"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+workload: "small"
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+
+  # Optional. If empty -> no limits block generated.
+  limits: {}
+  # limits:
+  #   cpu: "200m"
+  #   memory: "256Mi"
