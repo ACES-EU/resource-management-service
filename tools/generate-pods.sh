@@ -1,13 +1,13 @@
 #!/bin/bash
 
-COUNT=10
+COUNT=20
 SLEEP_TIME_SECONDS=5
 CHART="./charts/si-test"
 NAMESPACE="lake"
 SCHEDULER="resource-management-service"
 
 # Bucket distribution (change weights by repeating entries)
-BUCKETS=("small" "small" "medium" "medium" "large" "large" "xl")
+BUCKETS=("small" "small" "small" "medium" "medium" "medium" "medium" "large" "large" "xl")
 
 # Requests per bucket
 CPU_REQ_SMALL="50m";   MEM_REQ_SMALL="64Mi"
