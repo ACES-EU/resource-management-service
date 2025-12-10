@@ -1,6 +1,6 @@
 #!/bin/bash
 
-COUNT=20
+COUNT=100
 SLEEP_TIME_SECONDS=5
 CHART="./charts/si-test"
 NAMESPACE="lake"
@@ -72,7 +72,7 @@ for i in $(seq 1 $COUNT); do
         --set workload="$BUCKET" \
         --set resources.requests.cpu="$CPU_REQ" \
         --set resources.requests.memory="$MEM_REQ" \
-        $LIMITS
+        $LIMITS >/dev/null &
 
     echo "[INFO] Created $RELEASE in bucket $BUCKET (req=${CPU_REQ}/${MEM_REQ}, limits=${CPU_LIMIT:-none}/${MEM_LIMIT:-none})"
     sleep $SLEEP_TIME_SECONDS
