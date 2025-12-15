@@ -2,10 +2,10 @@ apiVersion: v1
 entries:
   resource-management-service:
   - apiVersion: v2
-    appVersion: 0.5.4
-    created: "2025-12-15T11:21:10.365058444Z"
+    appVersion: 0.5.4-dev.0.main.07aad6c9
+    created: "2025-12-15T11:21:11.650554541Z"
     description: ACES Resource Management Service
-    digest: a249c632922e1661c271f9b72eaf8e78912fe8fb5c5fec73f4739c966e231b63
+    digest: 7d8bee7b196ffdbb13a2b9471b8863004f391f8602ee0139b803d23913ea16d7
     name: resource-management-service
     type: application
     urls:
@@ -284,9 +284,9 @@ entries:
   si-test:
   - apiVersion: v2
     appVersion: "1.0"
-    created: "2025-12-15T11:21:10.36524354Z"
+    created: "2025-12-15T11:21:11.650739074Z"
     description: Test workloads for SI-based scheduler
-    digest: 64e9131feb90986e1d4de863cb61b3c66c0bf0e149ea4886dee06642e7165b5f
+    digest: 0e81a43c6620c581e42ee6963c29421e2436250205b8dcd1715a44e5fb4ae2e6
     name: si-test
     type: application
     urls:
@@ -295,12 +295,12 @@ entries:
   test-a:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2025-12-15T11:21:10.366975201Z"
+    created: "2025-12-15T11:21:11.65094575Z"
     description: Helm chart for test deployment A
-    digest: 24cf98ea1000ecc005aa4d87907efe4bf57f822247a25548e7e751f86c9478a9
+    digest: c4f13dd411e21d215ec383ee4863481346af4aeb5ad9bb0bfc48d53f49290c22
     name: test-a
     type: application
     urls:
     - https://ACES-EU.github.io/resource-management-service/helm-charts/test-a-0.1.0.tgz
     version: 0.1.0
-generated: "2025-12-15T11:21:10.364554993Z"
+generated: "2025-12-15T11:21:11.650044109Z"
