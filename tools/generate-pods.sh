@@ -7,7 +7,7 @@ NAMESPACE="lake"
 SCHEDULER="resource-management-service"
 
 # Bucket distribution (change weights by repeating entries)
-BUCKETS=("small" "small" "small" "small" "medium" "medium" "medium" "medium" "medium" "large" "xl")
+BUCKETS=("small" "small" "small" "small" "small" "medium" "medium" "medium" "medium" "large" "xl")
 
 # Requests per bucket
 CPU_REQ_SMALL="50m";   MEM_REQ_SMALL="64Mi"
@@ -16,7 +16,7 @@ CPU_REQ_LARGE="500m";  MEM_REQ_LARGE="512Mi"
 CPU_REQ_XL="750m";    MEM_REQ_XL="724Mi"
 
 # Chance (0–100) that ANY bucket gets limits
-LIMIT_PROB=30   # 40%
+LIMIT_PROB=40   # 40%
 
 random_range() {
     min=$1

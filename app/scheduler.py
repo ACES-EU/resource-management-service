@@ -14,6 +14,7 @@ from app.consts import (
     ANNOT_SCHEDULING_ATTEMPTED,
     ANNOT_SCHEDULING_SUCCESS,
     ORCHESTRATION_API_URL,
+    RETRY_EVERY_SECONDS,
     WAM_URL,
     get_timestamp,
     patch_decision_start,
@@ -292,7 +293,7 @@ def start_scheduler():
                         perform_scheduling(pod, swarm_model)
             except Exception:
                 logger.exception("[RETRY] Error during retry logic.")
-            time.sleep(30)
+            time.sleep(RETRY_EVERY_SECONDS)
 
     threading.Thread(target=retry_unscheduled, daemon=True).start()
 

@@ -47,6 +47,8 @@ spec:
             value: "{{ .Values.envVariables.WorkloadActionsManagerURL }}"
           - name: ORCHESTRATION_API_URL
             value: "{{ .Values.envVariables.OrchestrationAPI }}"
+          - name: RETRY_EVERY_SECONDS
+            value: "{{ .Values.envVariables.RetryEverySeconds }}"
         {{- if .Values.webserver.enabled }}
         - name: {{ .Chart.Name }}-webserver
           securityContext:

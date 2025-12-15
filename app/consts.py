@@ -7,6 +7,7 @@ WAM_URL = getenv("WAM_URL", "http://wam-app.ul.svc.cluster.local:3030/rpc")
 ORCHESTRATION_API_URL = getenv(
     "ORCHESTRATION_API_URL", "http://aces-orchestration-api.hiros.svc.cluster.local"
 )
+RETRY_EVERY_SECONDS = float(getenv("RETRY_EVERY_SECONDS", "5"))
 
 # Annotation keys
 ANNOT_DECISION_START_TIME = "resource-management-service/decision-start-time"
