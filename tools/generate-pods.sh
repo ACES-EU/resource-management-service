@@ -16,7 +16,7 @@ CPU_REQ_LARGE="500m";  MEM_REQ_LARGE="512Mi"
 CPU_REQ_XL="750m";    MEM_REQ_XL="724Mi"
 
 # Chance (0–100) that ANY bucket gets limits
-LIMIT_PROB=40   # 40%
+LIMIT_PROB=30   # 30%
 
 random_range() {
     min=$1
