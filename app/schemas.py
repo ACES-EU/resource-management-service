@@ -13,7 +13,7 @@ class NodeResources(BaseModel):
     @field_validator("cpu", mode="before")
     @classmethod
     def convert_cpu_usage(cls, cpu_usage):
-        """Convert CPU usage string to millicores."""
+        """Convert CPU usage string to cores."""
         if isinstance(cpu_usage, (int, float)):
             return float(cpu_usage)
         return float(parse_quantity(cpu_usage))
@@ -21,10 +21,12 @@ class NodeResources(BaseModel):
     @field_validator("memory", mode="before")
     @classmethod
     def convert_memory_usage(cls, memory_usage):
-        """Convert memory usage string to bytes."""
+        """Convert memory usage string to mebibytes."""
         if isinstance(memory_usage, (int, float)):
-            return float(memory_usage)
-        return float(parse_quantity(memory_usage))
+            value = float(memory_usage)
+        else:
+            value = float(parse_quantity(memory_usage))
+        return value / (1024**2)  # bytes -> MiB
 
 
 class NodeDetail(BaseModel):
