@@ -89,7 +89,10 @@ def get_pod_usage():
     metrics = custom.list_cluster_custom_object("metrics.k8s.io", "v1beta1", "pods")
     for item in metrics["items"]:
         cpu = sum(parse_quantity(c["usage"]["cpu"]) for c in item["containers"])
-        mem = sum(parse_quantity(c["usage"]["memory"]) for c in item["containers"])
+        mem = sum(
+            parse_quantity(c["usage"]["memory"]) / (1024**2)
+            for c in item["containers"]
+        )
         usage[(item["metadata"]["namespace"], item["metadata"]["name"])] = {
             "cpu": cpu,
             "memory": mem,
@@ -113,6 +116,7 @@ def compute_node_slack():
         )
         req_mem = sum(
             parse_quantity(c.get("memory_request") if c.get("memory_request") else "0")
+            / (1024**2)
             for c in pod.get("containers", [])
         )
 
@@ -138,6 +142,6 @@ def get_pod_requested_resources(pod):
         mem_req = requests.get("memory", "0")
 
         total_cpu += parse_quantity(cpu_req)
-        total_mem += parse_quantity(mem_req)
+        total_mem += parse_quantity(mem_req) / (1024**2)
 
     return {"cpu": total_cpu, "memory": total_mem}
