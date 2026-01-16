@@ -1,10 +1,11 @@
 #!/bin/bash
 
 COUNT=30
-SLEEP_TIME_SECONDS=5
+SLEEP_TIME_SECONDS=10
 CHART="./charts/si-test"
 NAMESPACE="lake"
 SCHEDULER="resource-management-service"
+KUBECONFIG="/home/forga/codes/ACES/aces_Baston.yaml"
 
 # Bucket distribution (change weights by repeating entries)
 BUCKETS=("small" "small" "small" "small" "small" "medium" "medium" "medium" "medium" "large" "xl")
@@ -68,6 +69,7 @@ for i in $(seq 1 $COUNT); do
 
     helm upgrade --install "$RELEASE" "$CHART" \
         -n "$NAMESPACE" \
+        --kubeconfig "$KUBECONFIG" \
         --set schedulerName="$SCHEDULER" \
         --set workload="$BUCKET" \
         --set resources.requests.cpu="$CPU_REQ" \
