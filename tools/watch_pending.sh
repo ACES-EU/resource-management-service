@@ -2,8 +2,8 @@
 
 KUBECONFIG="/home/peter/data/codes/aces/lake-aces.yaml"
 
-while true
-	do kubectl get pods -n lake --kubeconfig $KUBECONFIG | awk '
+while true; do
+	kubectl get pods -n lake --kubeconfig $KUBECONFIG | awk '
 		BEGIN {c=0}
 		NR == 1 {
 			system("clear");
