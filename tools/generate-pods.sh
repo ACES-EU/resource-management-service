@@ -1,11 +1,11 @@
 #!/bin/bash
 
 COUNT=30
-SLEEP_TIME_SECONDS=10
+SLEEP_TIME_SECONDS=5
 CHART="./charts/si-test"
 NAMESPACE="lake"
 SCHEDULER="resource-management-service"
-KUBECONFIG="/home/forga/codes/ACES/aces_Baston.yaml"
+KUBECONFIG="/home/peter/data/codes/aces/lake-aces.yaml"
 
 # Bucket distribution (change weights by repeating entries)
 BUCKETS=("small" "small" "small" "small" "small" "medium" "medium" "medium" "medium" "large" "xl")

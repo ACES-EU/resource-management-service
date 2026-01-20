@@ -5,7 +5,7 @@
 set -e
 
 NAMESPACE="$1"
-KUBECONFIG="/home/forga/codes/ACES/aces_Baston.yaml"
+KUBECONFIG="/home/peter/data/codes/aces/lake-aces.yaml"
 
 if [[ -z "$NAMESPACE" ]]; then
   echo "Usage: $0 <namespace>"
